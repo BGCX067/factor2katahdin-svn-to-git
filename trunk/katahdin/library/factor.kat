@@ -1,0 +1,516 @@
+factor_stack = new System.Collections.Stack();
+factor_spare_stack = new System.Collections.Stack();
+
+module Factor
+{
+    class Expression;
+    
+    class BooleanTrueExpression : Expression
+    {
+        pattern
+        {
+            "True"
+        }
+        
+        method Get()
+        {
+            globals.factor_stack.Push(true);
+        }
+    }
+    
+    class BooleanFalseExpression : Expression
+    {
+        pattern
+        {
+            "False"
+        }
+        
+        method Get()
+        {
+            globals.factor_stack.Push(false);
+        }
+    }
+    
+    class NameExpression : Expression
+    {
+        pattern
+        {
+            name:Name
+        }
+        
+        method Get()
+        {
+            return scope.Parent.names[this.name.name];
+        }
+    }
+
+    
+    class StringExpression : Expression
+    {
+        pattern
+        {
+            string:String
+        }
+        
+        method Get()
+        {
+            globals.factor_stack.Push(this.string.Text);
+        }
+    }
+    
+    class ListExpression : Expression
+    {
+        pattern
+        {
+            "{" body:Expression* "}"
+        }
+        
+        method Get()
+        {
+        	_list = [];
+        	for(expression in this.body)
+        		_list.Add(expression); 
+            globals.factor_stack.Push(_list);
+        }
+    }
+       
+    class NumberExpression : Expression
+    {
+        pattern
+        {
+            number:Number
+        }
+        
+        method Get()
+        {
+            globals.factor_stack.Push(this.number.Value);
+        }
+    }
+    
+    class Statement;
+    
+    class ExpressionStatement : Statement
+    {
+        pattern
+        {
+            expression:Expression
+        }
+        
+        method Run()
+        {
+            this.expression.Get...();
+        }
+    }
+    
+    
+    class BooleanTrueStatement : Statement
+    {
+        pattern
+        {
+            a : BooleanTrueExpression
+        }
+        
+        method Run()
+        {
+            globals.factor_stack.Push(true);
+        }
+    }
+    
+    class BooleanFalseStatement : Statement
+    {
+        pattern
+        {
+            a : BooleanFalseExpression
+        }
+        
+        method Run()
+        {
+            globals.factor_stack.Push(false);
+        }
+    }
+    
+    class ListHeadStatement : Statement
+    {
+    	pattern
+    	{
+    		"head"
+    	}
+    	
+    	method Run()
+    	{
+    		list = globals.factor_stack.Pop();
+    		list[0].Get...();
+    	}
+    }
+    
+    class ListEmptyStatement : Statement
+    {
+    	pattern
+    	{
+    		"empty"
+    	}
+    	
+    	method Run()
+    	{
+    		list = globals.factor_stack.Pop();
+    		globals.factor_stack.Push(list.Count == 0);
+    	}
+    }
+    
+    class ListTailStatement : Statement
+    {
+    	pattern
+    	{
+    		"tail"
+    	}
+    		
+    	method Run()
+    	{
+    		list = globals.factor_stack.Pop();
+    		list.RemoveAt(0);
+    		globals.factor_stack.Push(list); 
+    	}
+    }
+    
+    
+    class DupStatement : Statement
+    {
+        pattern
+        {
+            "dup"
+        }
+        
+        method Run()
+        {
+            value = globals.factor_stack.Peek();
+            globals.factor_stack.Push(value);
+        }
+    }
+    
+    class AddStatement : Statement
+    {
+        pattern
+        {
+            "+"
+        }
+        
+        method Run()
+        {
+            a = globals.factor_stack.Pop();
+            b = globals.factor_stack.Pop();
+            value = a + b;
+            globals.factor_stack.Push(value);
+        }
+    }
+    
+    class SubStatement : Statement
+    {
+        pattern
+        {
+            "-"
+        }
+        
+        method Run()
+        {
+            a = globals.factor_stack.Pop();
+            b = globals.factor_stack.Pop();
+            value = a - b;
+            globals.factor_stack.Push(value);
+        }
+    }
+    
+    class MulStatement : Statement
+    {
+        pattern
+        {
+            "*"
+        }
+        
+        method Run()
+        {
+            a = globals.factor_stack.Pop();
+            b = globals.factor_stack.Pop();
+            value = a * b;
+            globals.factor_stack.Push(value);
+        }
+    }
+    
+    class DivStatement : Statement
+    {
+        pattern
+        {
+            "/"
+        }
+        
+        method Run()
+        {
+            a = globals.factor_stack.Pop();
+            b = globals.factor_stack.Pop();
+            value = a / b;
+            globals.factor_stack.Push(value);
+        }
+    }
+    
+    class EqualityStatement : Statement
+    {
+        pattern
+        {
+            "="
+        }
+        
+        method Run()
+        {
+            a = globals.factor_stack.Pop();
+            b = globals.factor_stack.Pop();
+            value = a == b;
+            globals.factor_stack.Push(value);
+        }
+    }
+    
+    class SpareStatement : Statement
+    {
+        pattern
+        {
+            ">r"
+        }
+        
+        method Run()
+        {
+            value = globals.factor_stack.Pop();
+            globals.factor_spare_stack.Push(value);
+        }
+    }
+    
+    class SpareBackStatement : Statement
+    {
+        pattern
+        {
+            "r>"
+        }
+        
+        method Run()
+        {
+            value = globals.factor_spare_stack.Pop();
+            globals.factor_stack.Push(value);
+        }
+    }
+    
+    class PrintStatement : Statement
+    {
+        pattern
+        {
+            "."
+        }
+        
+        method Run()
+        {
+	        value = globals.factor_stack.Pop();
+            print value;
+        }
+    }
+
+    class FactorReturn : Statement
+    {
+	    pattern
+	    {
+	        "factorreturn"
+	    }
+
+	    method Run()
+	    {   
+		    value = globals.factor_stack.Pop();
+		    return value;
+	    }
+    }
+    
+    class DropStatement : Statement
+    {
+        pattern
+        {
+            "drop"
+        }
+        
+        method Run()
+        {
+	        globals.factor_stack.Pop();
+        }
+    }
+    
+    class SwapStatement : Statement
+    {
+        pattern
+        {
+            "swap"
+        }
+        
+        method Run()
+        {
+	        a = globals.factor_stack.Pop();
+	        b = globals.factor_stack.Pop();
+            globals.factor_stack.Push(a);
+            globals.factor_stack.Push(b);
+        }
+    }
+    
+    class IfStatement : Statement
+    {
+        pattern
+        {
+            "if"
+        }
+        
+        method Run()
+        {
+            _elsebloc = globals.factor_stack.Pop();
+            _thenbloc = globals.factor_stack.Pop();
+            _cond = globals.factor_stack.Pop();
+            if (_cond)
+            {
+                _thenbloc.Call...();
+            }
+            else
+                _elsebloc.Call...();
+        }
+    }
+    
+    class IntCallStatement : Statement
+    {
+        pattern
+        {       	
+            name:Name"--"
+        }
+        
+        method Run()
+        {
+            value = globals.names[this.name.name].Call...();
+            return value;
+        }
+    }
+    
+    class ExtCallStatement : Statement
+    {
+        pattern
+        {            
+            callable:Expression
+                "()"
+        }
+        
+        method Run()
+        {
+            parameterValues = [];
+            
+            //parametersNumber = this.number.Value;
+            parametersNumber = this.callable.Get...().parameters.Count;
+            
+            for (n = 0; n < parametersNumber; n++)
+                parameterValues.Add(globals.factor_stack.Pop());
+
+            parameterValues = parameterValues.ToArray();
+            refParams = null;            
+            
+            _returnValue = Katahdin.CodeTree.CallNode.Call(
+                this.callable.Get...(),
+                parameterValues,
+                true,
+                refParams);
+                
+            if (_returnValue != null)
+                globals.factor_stack.Push(_returnValue);
+        }
+    }
+    
+    class CallStatement : Statement
+    {
+        pattern
+        {
+            "call"
+        }
+        
+        method Run()
+        {
+	        bloc = globals.factor_stack.Pop();
+	        bloc.Call...();
+        }
+    }
+    
+    class BlocStatement : Statement
+    {
+        pattern
+        {
+            "[" body:Statement* "]"
+        }
+        
+        method Call()
+        {
+            for(statement in this.body)
+            {   
+                statement.Run...();
+            }
+        }
+        
+        method Run()
+        {
+            globals.factor_stack.Push(this);
+        }
+    }
+
+    class FunctionStatement : Statement
+    {
+        pattern
+        {
+            ":" name:Name body:Statement+ ";"
+        }
+        
+        method Call()
+        {
+            for (parameterValue in parameterValues)
+        	globals.factor_stack.Push(parameterValue);
+	        parameterValues = [];
+            for (statement in this.body)
+                value = statement.Run();
+            return value;
+        }
+        
+        method Run()
+        {
+            globals.names[this.name.name] = this;
+        }
+    }
+  
+    class TopLevelStatement
+    {
+        pattern
+        {
+            statement:Statement
+        }
+        
+        method Parsed()
+        {
+            this.statement.Run...();
+        }
+    }
+    
+    class Program
+    {
+        pattern
+        {
+            statements:TopLevelStatement*
+        }
+        
+        method Parsed()
+        {
+        }
+    }
+}
+
+class FactorStatement : Statement
+{
+    pattern
+    {
+        "factor" "{" Factor.Program "}"
+    }
+
+    method Run()
+    {
+    }
+}

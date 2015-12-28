@@ -1,0 +1,30 @@
+import "factor.kat";
+import "python.kat";
+
+python
+{
+    def plus(number):
+        return number+1
+    def display(number):
+        print number
+    print plus(10)
+}
+
+factor
+{
+     : freturn factorreturn ;
+	 : double dup + ;
+	 : drop drop ;
+	 { "hi" 2 3 } dup drop dup head . dup tail . empty .
+	 False True . .	
+	 5 10 3 3 = [ plus() . ] [ double-- . ] if
+	 5
+	 : factorial dup 1 = [ drop 1 ] [ dup 1 swap - factorial-- * ] if ; 
+}
+
+python
+{
+    factorial(5)
+    print freturn()
+}
+

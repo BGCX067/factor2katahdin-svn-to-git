@@ -1,0 +1,84 @@
+Ceci est la documentation du projet inf355.
+
+La dernière version du projet peut être obtenue sur le dépôt svn du projet:
+"svn checkout http://factor2katahdin.googlecode.com/svn/trunk/ factor2katahdin"
+
+Pour compiler, il faut avoir installé:
+- L'environnement mono, et gmcs (le compilateur)
+- GTK+ et GTK# pour utiliser le debugger.
+Pour compiler, il suffit d'executer "make" à la racine. 
+Attention : Il faut ajouter le répertoire du projet, le répertoire des
+bibliothèque (library) et le chemin vers les bibliothèques Mono (habituellement 
+"/usr/lib/mono/<version>") à la variable $KATAHDIN.
+On peut alors lancer l'interpréteur avec "katahdini". Deux fichiers de démo sont fournis. Ils se trouvent dans le dossier demos/factor_python . "test.kat" est un résumé de toutes les possibilité.
+ 
+
+
+Résumé:
+Le but du projet était d'ajouter une interface pour Factor dans les bibliothèque
+de Katahdin.
+
+Ce qui marche:
+- Les Booléens : Taper "True" ou "False" place le booléen correspondant sur
+la pile 
+
+- Les Strings : Taper un string avec les guillemet le place sur la pile. Les string ne sont pas des listes, mais de véritables objets.
+
+- Les listes : Les expressions placés entre {} sont converti en une liste qui est placé sur la pile.
+
+- Les nombres : Comportement identique à factor. Seuls les entiers marchent.
+
+- Les blocs de code marchent de la même manière que factor. On peut y appeler des fonction d'autres langages.
+
+--- Les fonctions de base ---
+
+- head : renvoie la tête d'une liste.
+- tail : renvoie la queue d'une liste.
+- dup : duplique le dernier élément de la pile.
+- + : ajoute les deux derniers élément et met le résultat sur la pile.
+- - : comme factor.
+- * : comme factor.
+- / : comme factor.
+- = : comme factor.
+
+- >r : comme factor.
+- r> : comme factor.
+- . : comme factor.
+- "drop": comme factor.
+- "swap": comme factor.
+- "if" : comme factor.
+- "call" exécute un bloc de code.
+
+--- Définition et appels de fonction ---
+
+La définition d'une nouvelle fonction se fait exactement comme en factor. Le nom doit commencé par un caractère alphabétique et peut contenir des chiffres par la suite. La récursion marche sans problème. Mais les signatures ne sont pas supportées.
+L'appel d'une fonction qui n'est pas de base se fait de la manière suivante:
+
+fonction factor : <nom de la fonction>"--"
+    Les "--" sert à disinguer une fonction factor d'une structure factor. Samuel Tardieu a réussi à s'en passer en modifiant l'architecture.
+fonction externes : <nom de la fonction>"()"
+	Dans le cas d'une fonction externes, le nombre d'argument est déduit automatiquement de la signature de celle-ci. Les arguments sont lus sur la pile. S'il y a une valeur de retour, celle-ci est ensuite placée sur la pile.
+	
+--- Appels depuis l'extérieur ---
+Les appels se fotn avec le nom de la fonction (sans "--") et avec un nombre arbitraire d'arguments qui seront mis sur la pile avant de commencer l'execution de la fonction. A cause des problèmes causés par les fonctions récursives, pour récupèrer le résultat, nous devons utiliser une structure de factor spécialement défini pour cela, qui s'appelle factorreturn.
+Attention : Pour pouvoir utiliser ceci depusi python, il est nécessaire de définir dans factor une fonction comme ": factorreturn factorreturn ;" pour que le nom soit visible depusi l'extérieur.
+
+
+--- Les modifications ---
+
+Le fichier library/factor.kat contient l'essentiel du code. Elle contient toutes les structures de base.
+Le fichier library/languages.kat permet à katahdin de reconnaître les fichier *.factor comme du code factor.
+Un problème avec le vérificateur d'arité de katahdin m'a obligé à commenter une partie du fichier Katahdin/Method.cs. J'ai aussi dû rendre uen variable de la classe public. Le diff contient :
+13c13
+<         private List<string> parameters;
+---
+>         public List<string> parameters;
+62c62
+<             if (parameterValues.Length != parameters.Count)
+---
+>             /*if (parameterValues.Length != parameters.Count)
+65a66
+>             */
+
+
+
